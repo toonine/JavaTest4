@@ -1,0 +1,35 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <util:properties id="db" location="classpath:db.properties"/>
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"
+          p:dataSource-ref="dataSource"
+          p:configuration-ref="mybatisConfiguration"
+          p:typeAliasesPackage="com.hand.domain.entity"
+          p:mapperLocations="classpath:com.hand.infra.mapper/**.xml">
+        <property name="plugins">
+            <array>
+                <bean id="sqlStatementInterceptor" class="com.hand.interceptor.SqlStatementInterceptor"/>
+            </array>
+        </property>
+    </bean>
+
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close"
+          p:driverClass="com.mysql.cj.jdbc.Driver"
+          p:jdbcUrl="#{'jdbc:mysql://'+ T(System).getenv('MYSQL_IP') + ':' + T(System).getenv('MYSQL_PORT') +'/' + db['database'] + '?useUnicode=true&amp;characterEncoding=utf8&amp;useSSL=false&amp;serverTimezone=GMT%2b8'}"
+          p:user="#{T(System).getenv('MYSQL_USERNAME')}"
+          p:password="#{T(System).getenv('MYSQL_ROOT_PASSWORD')}"/>
+
+    <bean id="mybatisConfiguration" class="org.apache.ibatis.session.Configuration"
+          p:useGeneratedKeys="true"
+          p:useColumnLabel="true"
+          p:mapUnderscoreToCamelCase="true"
+          p:autoMappingBehavior="FULL"/>
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer"
+          p:basePackage="com.hand.infra.mapper"
+          p:sqlSessionFactoryBeanName="sqlSessionFactory"/>
+</beans>

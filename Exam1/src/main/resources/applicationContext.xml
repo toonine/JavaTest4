@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <bean id="filmService" class="com.hand.api.service.impl.FilmServiceImpl" autowire="constructor"/>
+
+    <bean class="com.hand.event.handler.ContextStartedEventHandler"/>
+    <bean class="com.hand.event.handler.ContextStoppedEventHandler"/>
+    <bean class="com.hand.event.handler.BeforeInsertFilmEventHandler"/>
+    <bean class="com.hand.event.handler.AfterInsertFilmEventHandler"/>
+    <bean class="com.hand.event.publisher.BeforeInsertFilmEventPublisher"/>
+    <bean class="com.hand.event.publisher.AfterInsertFilmEventPublisher"/>
+
+    <bean id="insertFilmEventAspectBean" class="com.hand.event.InsertFilmEventAspect" autowire="constructor"/>
+
+    <aop:config>
+        <aop:advisor advice-ref="txAdvice" pointcut="execution(* com.hand.api.service.impl.*.*(..))"/>
+        <aop:aspect id="insertFilmEventAspect" ref="insertFilmEventAspectBean">
+            <aop:pointcut id="insertFilm" expression="execution(* com.hand.api.service.FilmService.insertFilm*(..))"/>
+            <aop:before method="doBeforeInsertFilm" pointcut-ref="insertFilm"/>
+            <aop:after-returning method="doAfterInsertFilm" pointcut-ref="insertFilm"/>
+        </aop:aspect>
+    </aop:config>
+
+    <tx:advice id="txAdvice">
+        <tx:attributes>
+            <tx:method name="list*" read-only="true"/>
+            <tx:method name="get*" read-only="true"/>
+            <tx:method name="insert*"/>
+            <tx:method name="update*"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+          p:dataSource-ref="dataSource"/>
+
+    <import resource="applicationContext-mybatis.xml"/>
+</beans>

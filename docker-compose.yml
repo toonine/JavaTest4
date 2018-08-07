@@ -1,0 +1,27 @@
+version: "3"
+services:
+  mysql:
+    container_name: mysql-sakila
+    image: javatest/mysql-sakila:0.0.1
+    build: ./docker/mysql
+    ports:
+    - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+  java:
+    container_name: java-sakila
+    image: javatest/java-sakila:0.0.1
+    build: ./docker/java
+    depends_on:
+    - mysql
+    links:
+    - mysql
+    command: /start.sh
+    environment:
+      MYSQL_USERNAME: root
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_IP: mysql
+      MYSQL_PORT: 3306
+      FILM_TITLE: FUGITIVE MAGUIRE
+      FILM_DESCRIPTION: FILM_DESCRIPTION
+      FILM_LANGUAGE_ID: 1
